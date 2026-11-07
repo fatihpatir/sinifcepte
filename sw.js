@@ -4,7 +4,7 @@
  * Geliştirici: Fatih PATIR
  */
 
-const CACHE_NAME = 'rehberlik-asistani-v9';
+const CACHE_NAME = 'rehberlik-asistani-v10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
