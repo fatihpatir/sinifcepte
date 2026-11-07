@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Çift dokunma ve zoom engeli -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SınıfCepte - Nene Hatun Kız MTAL</title>
+  
+  <!-- PWA & Mobil Uyumluluk -->
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SınıfCepte">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+
+  <!-- Elit Stil Dosyası -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Tesseract.js CDN (Sınıf Defteri Fotoğraftan OCR Okuma) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <!-- PDF.js CDN (e-Okul PDF okuma için) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Ana Uygulama Taşıyıcısı -->
+  <div id="app-container">
+
+    <!-- Üst Başlık (Header - Elit Cam Efekti) -->
+    <header class="app-header">
+      <div class="header-user" onclick="openModal('modal-settings')" title="Öğretmen & Okul Bilgilerini Düzenle">
+        <div class="app-logo-badge" title="SınıfCepte">
+          <img src="icons/icon.svg" alt="SınıfCepte Logo" class="app-logo-img">
+        </div>
+        <div class="user-text-info">
+          <span class="user-greeting" id="header-school-greeting">Nene Hatun Kız MTAL</span>
+          <span class="user-name-title">
+            <span id="header-teacher-name">Fatih PATIR</span>
+            <span style="font-size: 13px; color: var(--primary);">✏️</span>
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <!-- Tema / Görünüm Değiştirici Buton (☀️ / 🌙 / 🌌) -->
+        <button id="theme-toggle-btn" class="icon-btn" onclick="toggleThemeNext()" title="Görünüm Modunu Değiştir">
+          🎨
+        </button>
+        <!-- PWA Tek Tıkla Ana Ekrana Ekle Butonu -->
+        <button id="pwa-install-btn" class="icon-btn primary" title="Ana Ekrana Ekle" style="display: none;">
+          📲
+        </button>
+        <!-- Bilgi & Nasıl Kurulur & KVKK Butonu (ℹ️) -->
+        <button class="icon-btn" onclick="openModal('modal-install-guide')" title="Nasıl Kurulur & KVKK Bilgisi">
+          ℹ️
+        </button>
+        <!-- Ayarlar & Yedekleme Butonu -->
+        <button class="icon-btn" onclick="openModal('modal-settings')" title="Ayarlar ve Yedekleme">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="main-content">
+
+      <!-- ==========================================
+           GÖRÜNÜM 1: ANA SAYFA (SINIFLAR & ARAMA)
+           ========================================== -->
+      <section id="view-home" class="view active">
+        <!-- Canlı Öğrenci Arama Çubuğu -->
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="global-search-input" class="search-input-box" placeholder="Öğrenci adı veya numarası ile ara..." autocomplete="off">
+          <button id="search-clear-btn" class="search-clear-btn">✕</button>
+
+          <!-- Canlı Arama Sonuç Paneli -->
+          <div id="search-results-panel" class="search-results-panel"></div>
+        </div>
+
+        <!-- Hızlı İstatistik Şeridi -->
+        <div class="quick-stats-row">
+          <div class="stat-chip">
+            <span class="stat-icon">🏫</span>
+            <div class="stat-info">
+              <span class="stat-label">Sınıflar</span>
+              <span class="stat-val" id="total-classes-count">0</span>
+            </div>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-icon">👥</span>
+            <div class="stat-info">
+              <span class="stat-label">Öğrenciler</span>
+              <span class="stat-val" id="total-students-count">0</span>
+            </div>
+          </div>
+          <div class="stat-chip alert" onclick="openChronicListModal()" title="Kronik rahatsızlığı olanları listele">
+            <span class="stat-icon">🚨</span>
+            <div class="stat-info">
+              <span class="stat-label">Özel Durum</span>
+              <span class="stat-val" id="chronic-alert-count">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sınıflar Başlığı -->
+        <div class="section-title-row">
+          <h2 class="section-title">📂 Sınıflarım</h2>
+          <span style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">Sınıfa dokunup listeye girin</span>
+        </div>
+
+        <!-- Sınıf Kartları Izgarası (Başlangıçta Boş, Öğretmen Ekler) -->
+        <div id="classes-grid" class="classes-grid">
+          <!-- Dinamik olarak JS ile yüklenecek -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           GÖRÜNÜM 2: SINIF İÇİ ÖĞRENCİ LİSTESİ
+           ========================================== -->
+      <section id="view-class" class="view">
+        <div class="sub-header-bar">
+          <button id="back-to-home-btn" class="back-btn">
+            &larr; Sınıflar
+          </button>
+          
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="class-title-badge" id="class-view-title">Sınıf Adı</div>
+            <!-- Sınıfı Düzenle Butonu -->
+            <button class="inline-edit-btn" onclick="openEditClassModal()" title="Sınıf Adını Düzenle">
+              ✏️
+            </button>
+            <!-- Sınıfı Sil Butonu -->
+            <button class="inline-edit-btn" onclick="deleteCurrentClass()" style="background:#fee2e2; border-color:#fca5a5; color:#dc2626;" title="Bu Sınıfı Sil">
+              🗑️
+            </button>
+          </div>
+
+          <span class="badge-tag" id="class-student-count-badge" style="background:#e2e8f0; color:#1e293b; padding:4px 9px;">0 Öğrenci</span>
+        </div>
+
+        <!-- Sınıf Üstü Eylem Butonları (Elit 2x2 Izgara) -->
+        <div class="action-buttons-wrap">
+          <!-- 1. Sınıf Defterinden Tara (OCR) -->
+          <button class="action-btn" onclick="openOcrModal()" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">
+            📷 Defterden Tara
+          </button>
+          <!-- 2. e-Okul PDF'ten Yükle -->
+          <button class="action-btn" onclick="openModal('modal-pdf-import')">
+            📥 PDF'ten Yükle
+          </button>
+          <!-- 3. Yeni Öğrenci Ekle -->
+          <button class="action-btn primary" onclick="openAddStudentModal()">
+            ➕ Öğrenci Ekle
+          </button>
+          <!-- 4. Veli Bilgisi Paylaş (PDF / WhatsApp) -->
+          <button class="action-btn official-pdf" onclick="openOfficialReportModal()">
+            📄 Veli Bilgisi Paylaş
+          </button>
+        </div>
+
+        <!-- Öğrenci Listesi Kartları -->
+        <div id="class-students-list" class="student-list">
+          <!-- Dinamik Liste -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           GÖRÜNÜM 3: ÖĞRENCİ DETAY & PROFİL SAYFASI
+           ========================================== -->
+      <section id="view-student" class="view">
+        <div class="sub-header-bar">
+          <button id="back-to-class-btn" class="back-btn">
+            &larr; Sınıf Listesi
+          </button>
+          <button class="inline-edit-btn" onclick="openEditCurrentStudentModal()" style="font-size: 13.5px; padding: 6px 12px;">
+            ✏️ Tümünü Düzenle
+          </button>
+        </div>
+
+        <!-- Profil Başlığı & Vesikalık Fotoğraf -->
+        <div class="student-profile-header">
+          <div class="profile-photo-wrapper">
+            <img id="profile-photo-img" src="icons/icon.svg" alt="Vesikalık" class="profile-photo">
+            <!-- Kamera / Fotoğraf Yükle Butonu -->
+            <label for="camera-file-input" class="change-photo-btn" title="Fotoğraf Çek / Değiştir">
+              📷
+            </label>
+            <input type="file" id="camera-file-input" accept="image/*" capture="user" style="display: none;">
+          </div>
+          <div class="profile-name" id="profile-student-name">Öğrenci Adı</div>
+          <div class="profile-meta" id="profile-student-meta">Sınıf • Okul No: -</div>
+
+          <!-- Hızlı Veli İletişim Butonları -->
+          <div class="quick-contact-actions">
+            <button id="quick-call-mother" class="contact-action-btn call">
+              📞 Anne Ara / Yaz
+            </button>
+            <button id="quick-call-father" class="contact-action-btn whatsapp">
+              📞 Baba Ara / Yaz
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. Sağlık ve Kronik Durumlar Bloğu -->
+        <div class="info-section-card">
+          <div class="info-card-header">
+            <div class="info-card-title">
+              <span>🩺</span> Sağlık & Özel Durum
+            </div>
+            <button class="inline-edit-btn" onclick="openInlineEditModal('Sağlık')">
+              ✏️ Düzenle
+            </button>
+          </div>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="info-label">Kronik Rahatsızlık:</span>
+              <span class="info-value" id="det-illness-badge">YOK</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Rahatsızlık Detayı:</span>
+              <span class="info-value" id="det-illness-detail">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Acil Durum Notu / İlaç:</span>
+              <span class="info-value" id="det-emergency-action">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Aile & Kardeş Bilgileri Bloğu -->
+        <div class="info-section-card">
+          <div class="info-card-header">
+            <div class="info-card-title">
+              <span>👨‍👩‍👧‍👦</span> Aile & Veli Bilgileri
+            </div>
+            <button class="inline-edit-btn" onclick="openInlineEditModal('Aile')">
+              ✏️ Düzenle
+            </button>
+          </div>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="info-label">Anne - Baba Durumu:</span>
+              <span class="info-value" id="det-family-status">Birlikte</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Kardeş Sayısı:</span>
+              <span class="info-value" id="det-sibling-count">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Anne Adı:</span>
+              <span class="info-value" id="det-mother-name">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Anne Sağ / Vefat:</span>
+              <span class="info-value" id="det-mother-status">Sağ</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Anne Mesleği:</span>
+              <span class="info-value" id="det-mother-job">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Anne Telefonu:</span>
+              <span class="info-value clickable-phone" id="det-mother-phone">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Baba Adı:</span>
+              <span class="info-value" id="det-father-name">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Baba Sağ / Vefat:</span>
+              <span class="info-value" id="det-father-status">Sağ</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Baba Mesleği:</span>
+              <span class="info-value" id="det-father-job">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Baba Telefonu:</span>
+              <span class="info-value clickable-phone" id="det-father-phone">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Asıl Veli:</span>
+              <span class="info-value" id="det-primary-guardian">Anne</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. İletişim & Adres Bilgileri Bloğu -->
+        <div class="info-section-card">
+          <div class="info-card-header">
+            <div class="info-card-title">
+              <span>📍</span> İletişim & İkametgah
+            </div>
+            <button class="inline-edit-btn" onclick="openInlineEditModal('İletişim')">
+              ✏️ Düzenle
+            </button>
+          </div>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="info-label">Öğrenci Kendi Telefonu:</span>
+              <span class="info-value clickable-phone" id="det-student-phone">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">İkametgah / Adres:</span>
+              <span class="info-value" id="det-student-address">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Rehberlik & Görüşme Günlüğü -->
+        <div class="info-section-card">
+          <div class="info-card-header">
+            <div class="info-card-title">
+              <span>📝</span> Rehberlik & Görüşme Notları
+            </div>
+            <button class="action-btn primary" style="padding: 5px 12px; font-size: 12px;" onclick="openModal('modal-add-note')">
+              ➕ Not Ekle
+            </button>
+          </div>
+          <div id="student-notes-list" class="notes-list"></div>
+        </div>
+
+        <!-- Alt Eylemler (Silme) -->
+        <div style="margin-top: 24px; text-align: center;">
+          <button class="action-btn" style="color: var(--danger); border-color: var(--danger-border); background: var(--danger-light);" onclick="deleteCurrentStudent()">
+            🗑️ Bu Öğrenciyi Sil
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==========================================
+         ALT BİLGİ (FOOTER - Elit İmza)
+         ========================================== -->
+    <footer class="app-footer">
+      <div class="footer-author">
+        <span>Geliştirici:</span>
+        <a href="https://fatihpatir.github.io/web" target="_blank" rel="noopener" class="author-link" title="Fatih PATIR">
+          <span>Fatih PATIR</span>
+        </a>
+      </div>
+      <div>
+        <div class="footer-kvkk-badge" onclick="openModal('modal-install-guide')">
+          <span>🔒</span> %100 Çevrimdışı & Cihazda Saklı Veri (KVKK Uyumlu)
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==========================================
+       MODAL 0: SINIF DEFTERİNDEN FOTOĞRAFLA TARA (OCR)
+       ========================================== -->
+  <div id="modal-ocr-scan" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span>📷</span> Defterden Liste Tara (OCR)
+        </h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-ocr-scan')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
+          Sınıf defterindeki veya kağıttaki öğrenci listesinin fotoğrafını çekin; sistem numaraları ve isimleri otomatik olarak okur.
+        </p>
+
+        <!-- Kamera ve Galeri Seçim Butonları -->
+        <div class="ocr-trigger-box">
+          <label class="ocr-big-btn">
+            <span style="font-size: 28px;">📸</span>
+            <span>Kamera İle Çek</span>
+            <input type="file" id="ocr-camera-input" accept="image/*" capture="environment" style="display: none;">
+          </label>
+          <label class="ocr-big-btn">
+            <span style="font-size: 28px;">🖼️</span>
+            <span>Galeriden Seç</span>
+            <input type="file" id="ocr-gallery-input" accept="image/*" style="display: none;">
+          </label>
+        </div>
+
+        <!-- İlerleme Çubuğu & Durum Bilgisi -->
+        <div id="ocr-progress-wrap" class="ocr-progress-container">
+          <div id="ocr-status-text" style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">
+            ⏳ Fotoğraf taranıyor, lütfen bekleyiniz...
+          </div>
+          <div class="ocr-progress-bar-bg">
+            <div id="ocr-progress-bar" class="ocr-progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- Taranan ve Düzenlenebilir Tablo -->
+        <div id="ocr-results-wrap" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span id="ocr-count-info" style="font-size: 13px; font-weight: 800; color: var(--success);">
+              ✅ 0 Öğrenci Bulundu
+            </span>
+            <button type="button" class="action-btn" onclick="addOcrBlankRow()" style="padding: 4px 10px; font-size: 12px;">
+              ➕ Satır Ekle
+            </button>
+          </div>
+
+          <div class="ocr-table-wrap">
+            <table class="ocr-edit-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">No</th>
+                  <th>Adı Soyadı</th>
+                  <th style="width: 35px; text-align: center;">✕</th>
+                </tr>
+              </thead>
+              <tbody id="ocr-table-body">
+                <!-- Taranan satırlar buraya gelir -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeModal('modal-ocr-scan')">Kapat</button>
+        <button id="ocr-save-btn" class="action-btn primary" style="display: none;" onclick="saveOcrStudents()">
+          ✅ Bu Öğrencileri Sınıfa Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 1: BİLGİ (ℹ️), NASIL KURULUR & KVKK AYDINLATMASI
+       ========================================== -->
+  <div id="modal-install-guide" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">ℹ️ Rehber & KVKK Aydınlatması</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-install-guide')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+          <h4 style="color: #065f46; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: 800;">
+            <span>🛡️</span> KVKK ve Veri Gizliliği Güvencesi
+          </h4>
+          <p style="font-size: 12.5px; color: #047857; line-height: 1.6;">
+            Bu uygulama <strong>sunucusuz ve çevrimdışı (offline-first)</strong> mimariye sahiptir. Girdiğiniz hiçbir öğrenci, veli veya sağlık bilgisi internete, harici bir sunucuya veya buluta <u>kesinlikle gönderilmez</u>. Tüm veriler doğrudan telefonunuzun kendi güvenli yerel belleğinde (IndexedDB) saklanır.
+          </p>
+        </div>
+
+        <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 10px; color: var(--text-main);">
+          📲 Uygulamayı Telefona Nasıl Kurarım?
+        </h4>
+
+        <div style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+          <strong style="font-size: 13px; color: #1d4ed8;">🤖 Android (Google Chrome):</strong>
+          <ol style="font-size: 12px; color: var(--text-muted); margin-left: 18px; margin-top: 6px; line-height: 1.6;">
+            <li>Sağ üstteki <strong>üç nokta (⋮)</strong> menüsüne dokunun.</li>
+            <li><strong>"Uygulamayı Yükle"</strong> veya <strong>"Ana Ekrana Ekle"</strong> seçeneğini seçin.</li>
+            <li>Telefonunuzun ana ekranından tek tıkla internetsiz de açabilirsiniz.</li>
+          </ol>
+        </div>
+
+        <div style="border: 1px solid var(--border); border-radius: 12px; padding: 12px;">
+          <strong style="font-size: 13px; color: #059669;">🍎 iPhone & iPad (Safari):</strong>
+          <ol style="font-size: 12px; color: var(--text-muted); margin-left: 18px; margin-top: 6px; line-height: 1.6;">
+            <li>Alttaki <strong>Paylaş</strong> simgesine (kareden yukarı çıkan ok 📤) dokunun.</li>
+            <li>Aşağı kaydırıp <strong>"Ana Ekrana Ekle"</strong> butonuna basın.</li>
+            <li>Ekranınızda bağımsız bir mobil uygulama olarak çalışacaktır.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn primary" onclick="closeModal('modal-install-guide')">Anladım</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: ARAMA / WHATSAPP İLETİŞİM SEÇİCİ
+       ========================================== -->
+  <div id="modal-contact-action" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span>💬</span> İletişim Seçenekleri
+        </h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-contact-action')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div id="contact-action-person" style="font-size: 16px; font-weight: 800;">-</div>
+          <div id="contact-action-phone-display" style="font-size: 14px; color: var(--text-muted); margin-top: 2px;">-</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button id="btn-call-direct" class="action-btn primary" style="flex: 1; justify-content: center; height: 46px;">
+            📞 Doğrudan Ara
+          </button>
+          <button id="btn-wa-direct" class="action-btn" style="flex: 1; justify-content: center; background: #22c55e; color: white; border-color: #22c55e; height: 46px;">
+            💬 WhatsApp Aç
+          </button>
+        </div>
+
+        <h4 style="font-size: 12.5px; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+          Hazır Şablonla WhatsApp Mesajı Gönder:
+        </h4>
+        <div id="wa-templates-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: VELİ BİLGİSİ PAYLAŞ (PDF / WHATSAPP)
+       ========================================== -->
+  <div id="modal-official-report" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span>📄</span> <span id="report-class-name">Sınıf</span> Veli Çizelgesi
+        </h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-official-report')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; line-height: 1.5;">
+          ℹ️ Bu liste; <strong>Okul No, Öğrenci Adı, Anne Adı & Tel, Baba Adı & Tel, Asıl Veli ve Kronik Sağlık Durumlarını</strong> içeren resmi A4 formatındadır.
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="btn-print-official-pdf" class="action-btn official-pdf" style="justify-content: center; height: 48px; font-size: 14px;">
+            🖨️ Yazdır / PDF Olarak Kaydet (A4)
+          </button>
+          <button id="btn-share-official-wa" class="action-btn" style="justify-content: center; background: #22c55e; color: white; border-color: #22c55e; height: 48px; font-size: 14px;">
+            💬 Veli Bilgisini WhatsApp ile Paylaş
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeModal('modal-official-report')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 4: PDF'TEN SINIF LİSTESİ AKTARMA (e-Okul)
+       ========================================== -->
+  <div id="modal-pdf-import" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span>📥</span> e-Okul'dan Sınıf Listesi Aktar
+        </h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-pdf-import')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Yöntem 1: e-Okul PDF Dosyası Yükle</label>
+          <input type="file" id="pdf-file-input" accept=".pdf" class="form-control">
+          <small style="color: var(--text-muted); font-size: 11px;">e-Okul'dan indirdiğiniz sınıf listesi PDF dosyasını seçebilirsiniz.</small>
+        </div>
+
+        <div style="text-align: center; margin: 12px 0; color: var(--text-muted); font-size: 12px; font-weight: bold;">
+          - VEYA -
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Yöntem 2: Listeyi Kopyalayıp Buraya Yapıştır</label>
+          <textarea id="paste-text-input" class="form-control" rows="3" placeholder="Örn:&#10;124 AHMET YILMAZ&#10;145 AYŞE DEMİR"></textarea>
+          <button id="btn-parse-pdf" class="action-btn" style="margin-top: 6px; width: 100%; justify-content: center;">
+            🔍 Metni Tara ve Ayıkla
+          </button>
+        </div>
+
+        <div id="pdf-import-preview" style="margin-top: 14px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeModal('modal-pdf-import')">İptal</button>
+        <button id="btn-confirm-import" class="action-btn primary" style="display: none;">
+          ✅ Bu Öğrencileri Sınıfa Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 5: HIZLI ALAN DÜZENLEME (Tek Kalem)
+       ========================================== -->
+  <div id="modal-inline-edit" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title" id="inline-edit-title">Bilgileri Güncelle</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-inline-edit')">✕</button>
+      </div>
+      <div class="modal-body" id="inline-edit-fields"></div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeModal('modal-inline-edit')">İptal</button>
+        <button id="inline-edit-save-btn" class="action-btn primary">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 6: KAPSAMLI ÖĞRENCİ EKLE / DÜZENLE
+       ========================================== -->
+  <div id="modal-student-full" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title" id="st-form-title">Öğrenci Bilgileri</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-student-full')">✕</button>
+      </div>
+      <form id="form-student-full" style="display: contents;">
+        <input type="hidden" id="st-form-id">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Okul No *</label>
+              <input type="number" id="st-form-no" class="form-control" placeholder="124" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Adı Soyadı *</label>
+              <input type="text" id="st-form-name" class="form-control" placeholder="Ahmet Yılmaz" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Öğrenci Kendi Telefonu</label>
+              <input type="tel" id="st-form-phone" class="form-control" placeholder="05xx...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kardeş Sayısı</label>
+              <input type="number" id="st-form-sibling" class="form-control" placeholder="2">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ev Adresi / İkametgah</label>
+            <textarea id="st-form-address" class="form-control" rows="2" placeholder="Mahalle, Cadde, İlçe..."></textarea>
+          </div>
+
+          <div style="background: var(--surface-secondary); padding: 12px; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border);">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Kronik Rahatsızlık?</label>
+                <select id="st-form-chronic" class="form-control">
+                  <option value="false">Hayır (Yok)</option>
+                  <option value="true">Evet (Var)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hastalık / Alerji Detayı</label>
+                <input type="text" id="st-form-illness-detail" class="form-control" placeholder="Astım, Şeker vb.">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Acil Durum Müdahalesi / İlaç</label>
+              <input type="text" id="st-form-emergency" class="form-control" placeholder="Örn: Ventolin sprey">
+            </div>
+          </div>
+
+          <!-- Anne Bilgileri -->
+          <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 10px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Anne Adı</label>
+                <input type="text" id="st-form-mother-name" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Anne Telefonu</label>
+                <input type="tel" id="st-form-mother-phone" class="form-control" placeholder="05xx...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Anne Mesleği</label>
+                <input type="text" id="st-form-mother-job" class="form-control" placeholder="Ev Hanımı / Memur...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Anne Sağ / Vefat</label>
+                <select id="st-form-mother-alive" class="form-control">
+                  <option value="Sağ">Sağ</option>
+                  <option value="Vefat">Vefat</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Baba Bilgileri -->
+          <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 10px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Baba Adı</label>
+                <input type="text" id="st-form-father-name" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Baba Telefonu</label>
+                <input type="tel" id="st-form-father-phone" class="form-control" placeholder="05xx...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Baba Mesleği</label>
+                <input type="text" id="st-form-father-job" class="form-control" placeholder="Esnaf / İşçi...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Baba Sağ / Vefat</label>
+                <select id="st-form-father-alive" class="form-control">
+                  <option value="Sağ">Sağ</option>
+                  <option value="Vefat">Vefat</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aile Durumu & Asıl Veli -->
+          <div class="form-row" style="margin-top: 10px;">
+            <div class="form-group">
+              <label class="form-label">Anne-Baba Durumu</label>
+              <select id="st-form-parents-together" class="form-control">
+                <option value="Birlikte">Birlikte</option>
+                <option value="Ayrı">Ayrı (Boşanmış)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Asıl İletişim Velisi</label>
+              <select id="st-form-guardian" class="form-control">
+                <option value="Anne">Anne</option>
+                <option value="Baba">Baba</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="action-btn" onclick="closeModal('modal-student-full')">İptal</button>
+          <button type="submit" class="action-btn primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 7: YENİ SINIF EKLE
+       ========================================== -->
+  <div id="modal-add-class" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Yeni Sınıf Ekle</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-add-class')">✕</button>
+      </div>
+      <form id="form-add-class" style="display: contents;">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Sınıf / Şube Adı:</label>
+            <input type="text" id="new-class-name" class="form-control" placeholder="Örn: 9/A, 10/B, 11/C Bilişim" required autofocus>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="action-btn" onclick="closeModal('modal-add-class')">İptal</button>
+          <button type="submit" class="action-btn primary">Sınıfı Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 8: SINIF ADI DÜZENLE
+       ========================================== -->
+  <div id="modal-edit-class" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Sınıf Adını Güncelle</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-edit-class')">✕</button>
+      </div>
+      <form id="form-edit-class" style="display: contents;">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Yeni Sınıf Adı:</label>
+            <input type="text" id="edit-class-name-input" class="form-control" required autofocus>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="action-btn" onclick="closeModal('modal-edit-class')">İptal</button>
+          <button type="submit" class="action-btn primary">Güncelle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 9: YENİ GÖRÜŞME NOTU EKLE
+       ========================================== -->
+  <div id="modal-add-note" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">📝 Yeni Görüşme Notu</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-add-note')">✕</button>
+      </div>
+      <form id="form-add-note" style="display: contents;">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Kiminle Görüşüldü?</label>
+            <select id="note-form-person" class="form-control">
+              <option value="Anne">Anne</option>
+              <option value="Baba">Baba</option>
+              <option value="Öğrencinin Kendisi">Öğrencinin Kendisi</option>
+              <option value="Veli (Diğer)">Veli (Diğer)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Görüşme Konusu:</label>
+            <input type="text" id="note-form-subject" class="form-control" placeholder="Örn: Ders başarısı, devamsızlık takibi" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Görüşme Detayı / Alınan Karar:</label>
+            <textarea id="note-form-details" class="form-control" rows="3" placeholder="Görüşülen konular ve planlanan adımlar..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="action-btn" onclick="closeModal('modal-add-note')">İptal</button>
+          <button type="submit" class="action-btn primary">Notu Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 10: AYARLAR & YEDEKLEME
+       ========================================== -->
+  <div id="modal-settings" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Ayarlar & Profil</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-settings')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Görünüm / Tema Seçimi -->
+        <div class="form-group">
+          <label class="form-label">🎨 Görünüm Teması:</label>
+          <div class="theme-selector-grid">
+            <button type="button" class="theme-pill-btn active" data-theme="light" onclick="applyTheme('light')">
+              <span style="font-size: 18px;">☀️</span>
+              <span>Aydınlık</span>
+            </button>
+            <button type="button" class="theme-pill-btn" data-theme="dark" onclick="applyTheme('dark')">
+              <span style="font-size: 18px;">🌙</span>
+              <span>Koyu Mod</span>
+            </button>
+            <button type="button" class="theme-pill-btn" data-theme="midnight" onclick="applyTheme('midnight')">
+              <span style="font-size: 18px;">🌌</span>
+              <span>Gece Safiri</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="background: var(--primary-light); border: 1px solid var(--primary-border); padding: 12px; border-radius: 12px; margin-bottom: 16px; font-size: 12.5px; color: var(--primary);">
+          ℹ️ <strong>Önemli:</strong> Aşağıya yazacağınız Öğretmen Adı, veli listeleri çıktısında ve WhatsApp mesajlarında otomatik olarak yer alır. Her öğretmen kendi adını tanımlayarak kullanabilir.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Öğretmen Adı Soyadı:</label>
+          <input type="text" id="settings-teacher-name" class="form-control" value="Fatih PATIR">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Okul / Kurum Adı:</label>
+          <input type="text" id="settings-school-name" class="form-control" value="Nene Hatun Kız MTAL">
+        </div>
+        <button id="btn-save-settings" class="action-btn primary" style="width: 100%; justify-content: center; margin-bottom: 20px; height: 46px;">
+          💾 Bilgileri Güncelle
+        </button>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 16px 0;">
+
+        <h4 style="font-size: 14px; font-weight: 800; margin-bottom: 8px;">💾 Veri Güvencesi & Yedekleme</h4>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+          Telefonunuz değiştiğinde veya verilerinizi yedeklemek istediğinizde tüm sınıfları ve öğrencileri tek tıkla dosya olarak indirebilirsiniz.
+        </p>
+
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-export-backup" class="action-btn" style="flex: 1; justify-content: center;">
+            📥 Yedeği İndir (JSON)
+          </button>
+          <label class="action-btn" style="flex: 1; justify-content: center; cursor: pointer;">
+            📤 Yedek Yükle
+            <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+          </label>
+        </div>
+
+        <div style="margin-top: 14px; text-align: center;">
+          <button type="button" class="action-btn" style="color: var(--danger); border-color: var(--danger-border); background: var(--danger-light); width: 100%; justify-content: center;" onclick="resetAllData()">
+            🗑️ Tüm Verileri Temizle (Sıfırdan Başla)
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="closeModal('modal-settings')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       YAZDIRMA / PDF ÇIKTI ALANI (Yalnızca Print / PDF Sırasında Görünür)
+       ========================================== -->
+  <div id="print-container"></div>
+
+  <!-- JavaScript Dosyaları -->
+  <script src="js/db.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/pdf-service.js"></script>
+  <script src="js/ocr-service.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Kaydı -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker başarıyla yüklendi:', reg.scope))
+          .catch(err => console.log('Service Worker kayıt hatası:', err));
+      });
+    }
+
+    // Ayarları kaydetme butonu bağlayıcısı
+    document.getElementById('btn-save-settings').addEventListener('click', async () => {
+      const teacherName = document.getElementById('settings-teacher-name').value.trim() || 'Fatih PATIR';
+      const schoolName = document.getElementById('settings-school-name').value.trim() || 'Nene Hatun Kız MTAL';
+
+      await window.db.setSetting('teacherName', teacherName);
+      await window.db.setSetting('schoolName', schoolName);
+
+      await loadSettings();
+      closeModal('modal-settings');
+      alert('Bilgileriniz başarıyla güncellendi.');
+    });
+
+    // Kronik Hastalıklar Modalı
+    async function openChronicListModal() {
+      const chronicStudents = await window.db.getChronicIllStudents();
+      const resultsPanel = document.getElementById('search-results-panel');
+      const searchInput = document.getElementById('global-search-input');
+      if (chronicStudents.length === 0) {
+        alert('Kayıtlı öğrenciler arasında kronik rahatsızlığı olan öğrenci bulunmamaktadır.');
+        return;
+      }
+      if (searchInput) searchInput.value = 'Kronik Hastalık Filtresi';
+      renderSearchResults(chronicStudents, resultsPanel);
+    }
+    window.openChronicListModal = openChronicListModal;
+  </script>
+</body>
+</html>

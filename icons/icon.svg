@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Arka Plan Gradyanı: Kraliyet Safiri & Gece Mavisi -->
+    <linearGradient id="appBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="50%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- İç Işıma Gradyanı -->
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Altın Püskül Gradyanı -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Kep Tabanı Gradyanı -->
+    <linearGradient id="capBaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Gölgelendirme Filtresi -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- iOS / Squircle İkon Gövdesi -->
+  <rect width="512" height="512" rx="118" fill="url(#appBg)" />
+  <!-- Üst Yumuşak Işık Çerçevesi -->
+  <rect x="6" y="6" width="500" height="500" rx="112" fill="none" stroke="url(#glowGrad)" stroke-width="4" />
+
+  <!-- "Cepte"yi Simgeliyen Modern Kavisli Cep / Cihaz Çerçevesi -->
+  <path d="M128 140 
+           L384 140 
+           L384 340 
+           C384 395 340 436 256 446 
+           C172 436 128 395 128 340 
+           Z" 
+        fill="rgba(255, 255, 255, 0.06)" 
+        stroke="rgba(255, 255, 255, 0.22)" 
+        stroke-width="7" 
+        stroke-linejoin="round" />
+
+  <!-- Cep Üst Dikiş / Rozet Çizgisi -->
+  <path d="M165 140 L347 140" stroke="rgba(255, 255, 255, 0.4)" stroke-width="5" stroke-linecap="round" />
+
+  <!-- Eğitimi Simgeliyen Mezuniyet Kepi (Gölge Efektli) -->
+  <g filter="url(#dropShadow)">
+    <!-- Kep Alt Silindiri -->
+    <path d="M176 215 
+             L176 270 
+             C176 320 256 345 256 345 
+             C256 345 336 320 336 270 
+             L336 215" 
+          fill="url(#capBaseGrad)" />
+
+    <!-- Kep Üst Elmas Plakası -->
+    <polygon points="256,125 396,190 256,255 116,190" fill="#ffffff" />
+
+    <!-- Kep Tepe Düğmesi -->
+    <ellipse cx="256" cy="190" rx="12" ry="7" fill="#e2e8f0" />
+
+    <!-- Altın Püskül İpi ve Sallantısı -->
+    <path d="M256 190 Q345 200 355 285" fill="none" stroke="url(#goldGrad)" stroke-width="6.5" stroke-linecap="round" />
+    <circle cx="355" cy="292" r="9" fill="url(#goldGrad)" />
+    <!-- Püskül Uç Saçağı -->
+    <path d="M351 298 L348 322 M355 298 L355 325 M359 298 L362 322" stroke="url(#goldGrad)" stroke-width="3" stroke-linecap="round" />
+  </g>
+
+  <!-- Yıldız / Başarı Rozeti (Sol Üst Işıltı) -->
+  <path d="M160 185 Q170 185 170 175 Q170 185 180 185 Q170 185 170 195 Q170 185 160 185 Z" fill="#fbbf24" />
+</svg>
