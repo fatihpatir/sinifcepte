@@ -12,8 +12,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SınıfCepte">
   <link rel="manifest" href="manifest.json">
+  <!-- iOS Apple Touch Icon (Apple Kesinlikle PNG İster) -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  
+  <!-- Standart Favicon & PWA İkonları -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
-  <link rel="apple-touch-icon" href="icons/icon.svg">
 
   <!-- Elit Stil Dosyası -->
   <link rel="stylesheet" href="css/style.css">
@@ -75,6 +82,23 @@
            GÖRÜNÜM 1: ANA SAYFA (SINIFLAR & ARAMA)
            ========================================== -->
       <section id="view-home" class="view active">
+        <!-- Akıllı Mobil Kurulum Rehberi Şeridi (iOS & Android) -->
+        <div id="smart-install-banner" class="smart-install-banner" style="display: none;">
+          <div class="smart-banner-left">
+            <span class="smart-banner-icon">📲</span>
+            <div class="smart-banner-desc">
+              <strong id="banner-title">SınıfCepte'yi Telefona Yükleyin</strong>
+              <span id="banner-text">Tek dokunuşla internet olmadan da açın.</span>
+            </div>
+          </div>
+          <div class="smart-banner-actions">
+            <button id="banner-action-btn" class="smart-banner-btn" onclick="openModal('modal-install-guide')">
+              Nasıl Yapılır? ℹ️
+            </button>
+            <button class="smart-banner-close" onclick="dismissInstallBanner()">✕</button>
+          </div>
+        </div>
+
         <!-- Canlı Öğrenci Arama Çubuğu -->
         <div class="search-wrapper">
           <span class="search-icon">🔍</span>

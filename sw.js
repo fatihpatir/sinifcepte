@@ -4,7 +4,7 @@
  * Geliştirici: Fatih PATIR
  */
 
-const CACHE_NAME = 'rehberlik-asistani-v8';
+const CACHE_NAME = 'rehberlik-asistani-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,6 +15,9 @@ const ASSETS_TO_CACHE = [
   './js/pdf-service.js',
   './js/ocr-service.js',
   './js/app.js',
+  './icons/apple-touch-icon.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './icons/icon.svg'
 ];
 

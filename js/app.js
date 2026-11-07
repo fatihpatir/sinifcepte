@@ -107,16 +107,57 @@ async function loadSettings() {
 }
 
 /* ==========================================================================
-   2. PWA Kurulum & Çift Tıklama / Zoom Engeli
+   3. PWA Kurulum & Mobil Akıllı Bildirimler (iOS & Android)
    ========================================================================== */
 function setupPwaInstall() {
   const pwaBtn = document.getElementById('pwa-install-btn');
+  const banner = document.getElementById('smart-install-banner');
+  const bannerTitle = document.getElementById('banner-title');
+  const bannerText = document.getElementById('banner-text');
+  const bannerActionBtn = document.getElementById('banner-action-btn');
 
+  // Zaten yüklü mü kontrol et (Standalone mod)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isDismissed = sessionStorage.getItem('install_banner_dismissed') === 'true';
+
+  if (isStandalone || isDismissed) {
+    if (banner) banner.style.display = 'none';
+    return;
+  }
+
+  // iOS (iPhone / iPad) Tespiti
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (isIos && banner) {
+    bannerTitle.textContent = "🍎 iPhone'da Ana Ekrana Ekleyin";
+    bannerText.textContent = "Alttaki Paylaş (📤) simgesine basıp 'Ana Ekrana Ekle'yi seçin.";
+    bannerActionBtn.textContent = "Nasıl Yapılır? ℹ️";
+    bannerActionBtn.onclick = () => openModal('modal-install-guide');
+    banner.style.display = 'flex';
+  }
+
+  // Android / Chrome Otomatik Yükleme Olayı
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     state.deferredPrompt = e;
-    if (pwaBtn) {
-      pwaBtn.style.display = 'inline-flex';
+    if (pwaBtn) pwaBtn.style.display = 'inline-flex';
+
+    if (banner && !isIos) {
+      bannerTitle.textContent = "📲 SınıfCepte'yi Telefona Yükleyin";
+      bannerText.textContent = "Tek dokunuşla internetsiz de bir mobil uygulama gibi kullanın.";
+      bannerActionBtn.textContent = "📲 Hemen Yükle";
+      bannerActionBtn.onclick = async () => {
+        if (state.deferredPrompt) {
+          state.deferredPrompt.prompt();
+          const { outcome } = await state.deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            banner.style.display = 'none';
+            if (pwaBtn) pwaBtn.style.display = 'none';
+          }
+          state.deferredPrompt = null;
+        }
+      };
+      banner.style.display = 'flex';
     }
   });
 
@@ -135,6 +176,14 @@ function setupPwaInstall() {
     });
   }
 }
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('smart-install-banner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('install_banner_dismissed', 'true');
+}
+
+window.dismissInstallBanner = dismissInstallBanner;
 
 function setupMobilePreventDoubleTap() {
   let lastTouchEnd = 0;
